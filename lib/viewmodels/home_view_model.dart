@@ -16,14 +16,21 @@ class HomeViewModel extends BaseViewModel {
   String get query => _query;
 
   List<Memo> get filteredMemos {
-    if (_query.isEmpty) return _memos;
-    final q = _query.toLowerCase();
-    return _memos.where((m) => (m.note ?? '').toLowerCase().contains(q)).toList();
+    List<Memo> result = _memos;
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      result = result.where((m) => (m.note ?? '').toLowerCase().contains(q)).toList();
+    }
+    // Sort by createdAt in descending order (newest first)
+    result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return result;
   }
 
   Future<void> init() async {
     setBusy(true);
     await _repo.purgeExpired();
+    // Remove memos with missing image files
+    await _repo.removeMissingImageFiles();
     _memos = await _repo.loadMemos();
     setBusy(false);
     _purgeTimer?.cancel();

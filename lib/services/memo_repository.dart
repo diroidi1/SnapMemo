@@ -111,4 +111,22 @@ class MemoRepository {
     await saveMemos(memos);
     return removed;
   }
+
+  Future<int> removeMissingImageFiles() async {
+    await _ensureInit();
+    final memos = await loadMemos();
+    final initialCount = memos.length;
+    
+    // Remove memos whose image files don't exist
+    final validMemos = <Memo>[];
+    for (final memo in memos) {
+      final file = File(memo.filePath);
+      if (await file.exists()) {
+        validMemos.add(memo);
+      }
+    }
+    
+    await saveMemos(validMemos);
+    return initialCount - validMemos.length;
+  }
 }
